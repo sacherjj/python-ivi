@@ -2,7 +2,7 @@
 
 Python Interchangeable Virtual Instrument Library
 
-Copyright (c) 2012-2014 Alex Forencich
+Copyright (c) 2012-2017 Alex Forencich
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -53,6 +53,7 @@ class agilent4000A(agilent3000A):
                 'MSOX4032A','MSOX4034A','MSOX4052A','MSOX4054A','MSOX4104A','MSOX4154A']
 
         self._init_outputs()
+        self._init_channels()
         
     
     

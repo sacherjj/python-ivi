@@ -2,7 +2,7 @@
 
 Python Interchangeable Virtual Instrument Library
 
-Copyright (c) 2012-2014 Alex Forencich
+Copyright (c) 2012-2017 Alex Forencich
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1428,10 +1428,10 @@ class ArbGenerator(ivi.IviContainer):
         self._digital_modulation_arb_selected_waveform = ''
         self._digital_modulation_arb_clock_frequency = 0.0
         self._digital_modulation_arb_filter_frequency = 0.0
-        self._digital_modulation_arb_max_number_waveforms = 0.0
-        self._digital_modulation_arb_waveform_quantum = 0.0
-        self._digital_modulation_arb_waveform_size_min = 0.0
-        self._digital_modulation_arb_waveform_size_max = 0.0
+        self._digital_modulation_arb_max_number_waveforms = 0
+        self._digital_modulation_arb_waveform_quantum = 0
+        self._digital_modulation_arb_waveform_size_min = 0
+        self._digital_modulation_arb_waveform_size_max = 0
         self._digital_modulation_arb_trigger_source = 'immediate'
         self._digital_modulation_arb_external_trigger_slope = 'positive'
         

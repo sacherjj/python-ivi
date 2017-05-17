@@ -2,7 +2,7 @@
 
 Python Interchangeable Virtual Instrument Library
 
-Copyright (c) 2012-2014 Alex Forencich
+Copyright (c) 2012-2017 Alex Forencich
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -186,6 +186,7 @@ from .agilent8596EM import agilent8596EM
 from .agilent34401A import agilent34401A
 from .agilent34410A import agilent34410A
 from .agilent34411A import agilent34411A
+from .agilent34461A import agilent34461A
 
 # DC Power Supplies
 # 603xA
@@ -211,9 +212,23 @@ from .agilentE3647A import agilentE3647A
 from .agilentE3648A import agilentE3648A
 from .agilentE3649A import agilentE3649A
 
+# Source measure units
+from .agilentU2722A import agilentU2722A
+from .agilentU2723A import agilentU2723A
+
 # RF Power Meters
 from .agilent436A import agilent436A
 from .agilent437B import agilent437B
+# U2000 series
+from .agilentU2000A import agilentU2000A
+from .agilentU2000B import agilentU2000B
+from .agilentU2000H import agilentU2000H
+from .agilentU2001A import agilentU2001A
+from .agilentU2001B import agilentU2001B
+from .agilentU2001H import agilentU2001H
+from .agilentU2002A import agilentU2002A
+from .agilentU2002H import agilentU2002H
+from .agilentU2004A import agilentU2004A
 
 # RF Signal Generators
 # 8642A/B
@@ -236,6 +251,12 @@ from .agilentE4434B import agilentE4434B
 from .agilentE4435B import agilentE4435B
 from .agilentE4436B import agilentE4436B
 from .agilentE4437B import agilentE4437B
+
+# RF Sweep Generators
+from .agilent8340A import agilent8340A
+from .agilent8340B import agilent8340B
+from .agilent8341A import agilent8341A
+from .agilent8341B import agilent8341B
 
 # Tracking sources
 from .agilent85644A import agilent85644A

@@ -2,7 +2,7 @@
 
 Python Interchangeable Virtual Instrument Library
 
-Copyright (c) 2014 Alex Forencich
+Copyright (c) 2014-2017 Alex Forencich
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -168,11 +168,11 @@ class Virtual34401A(object):
             cmd = cmd.strip('?')
 
             if t is int:
-                d = '{:+d}'.format(self.vals[cmd]).encode()
+                d = '{0:+d}'.format(self.vals[cmd]).encode()
                 self.tx_log.append(d)
                 self.read_buffer = io.BytesIO(d)
             elif t is float:
-                d = '{:+E}'.format(self.vals[cmd]).encode()
+                d = '{0:+E}'.format(self.vals[cmd]).encode()
                 self.tx_log.append(d)
                 self.read_buffer = io.BytesIO(d)
             elif t is str:
@@ -180,7 +180,7 @@ class Virtual34401A(object):
                 self.tx_log.append(d)
                 self.read_buffer = io.BytesIO(d)
             elif t == 'qstr':
-                d = '"{}"'.format(self.vals[cmd]).encode()
+                d = '"{0}"'.format(self.vals[cmd]).encode()
                 self.tx_log.append(d)
                 self.read_buffer = io.BytesIO(d)
         else:

@@ -2,7 +2,7 @@
 
 Python Interchangeable Virtual Instrument Library
 
-Copyright (c) 2012-2014 Alex Forencich
+Copyright (c) 2012-2017 Alex Forencich
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -317,6 +317,8 @@ class IndexedPropertyCollection(object):
             self._objs.append(self._build_obj(self._props, self._docs, i))
     
     def __getitem__(self, key):
+        if type(key) is slice:
+            return self._objs[key]
         i = get_index(self._indicies_dict, key)
         return self._objs[i]
 
@@ -407,6 +409,66 @@ class Doc(object):
     
     def __str__(self):
         return self.doc
+
+
+class TraceY(object):
+    "Y trace object"
+    def __init__(self):
+        self.average_count = 1
+        self.y_increment = 0
+        self.y_origin = 0
+        self.y_reference = 0
+        self.y_raw = None
+        self.y_hole = None
+
+    @property
+    def y(self):
+        y = np.array(self.y_raw)
+        yf = y.astype(float)
+        if self.y_hole is not None:
+            yf[y == self.y_hole] = float('nan')
+        return ((yf - self.y_reference) * self.y_increment) + self.y_origin
+
+    def __getitem__(self, index):
+        y = self.y_raw[index]
+        if y == self.y_hole:
+            y = float('nan')
+        return ((y - self.y_reference) * self.y_increment) + self.y_origin
+
+    def __iter__(self):
+        return (float('nan') if y == self.y_hole else ((y - self.y_reference) * self.y_increment + self.y_origin) for i, y in enumerate(self.y_raw))
+
+    def __len__(self):
+        return len(self.y_raw)
+
+    def count(self):
+        return len(self.y_raw)
+
+
+class TraceYT(TraceY):
+    "Y-T trace object"
+    def __init__(self):
+        super(TraceYT, self).__init__()
+        self.x_increment = 0
+        self.x_origin = 0
+        self.x_reference = 0
+
+    @property
+    def x(self):
+        return ((np.arange(len(self.y_raw)) - self.x_reference) * self.x_increment) + self.x_origin
+
+    @property
+    def t(self):
+        return self.x
+
+    def __getitem__(self, index):
+        y = self.y_raw[index]
+        if y == self.y_hole:
+            y = float('nan')
+        return (((index - self.x_reference) * self.x_increment) + self.x_origin, ((y - self.y_reference) * self.y_increment) + self.y_origin)
+
+    def __iter__(self):
+        return ((((i - self.x_reference) * self.x_increment) + self.x_origin, float('nan') if y == self.y_hole else ((y - self.y_reference) * self.y_increment) + self.y_origin) for i, y in enumerate(self.y_raw))
 
 
 def add_attribute(obj, name, attr, doc = None):
@@ -582,7 +644,10 @@ def doc(obj=None, itm=None, docs=None, prefix=None):
             
             elif hasattr(obj, '_docs') and n in obj._docs:
                 d = obj._docs[n]
-            
+
+            elif hasattr(obj, n) and hasattr(getattr(obj, n), '_docs'):
+                return doc(getattr(obj, n))
+
             if type(d) == Doc:
                 return d
             elif type(d) == str:
@@ -631,7 +696,10 @@ def help(obj=None, itm=None, complete=False, indent=0):
                 print(d)
                 print('\n')
     elif obj is not None:
-        print(doc(obj, itm))
+        if itm is not None and type(itm) is not str:
+            print(doc(itm))
+        else:
+            print(doc(obj, itm))
     else:
         print(trim_doc("""
             Using Python IVI help
@@ -683,6 +751,26 @@ def help(obj=None, itm=None, complete=False, indent=0):
                 the IVI specific driver is compatible. The string has no white space
                 ...
             """))
+
+
+def list_resources():
+    res = []
+
+    if 'vxi11' in globals():
+        # search for VXI11 devices
+        try:
+            res.extend(vxi11.list_resources())
+        except:
+            pass
+
+    if 'usbtmc' in globals():
+        # search for USBTMC devices
+        try:
+            res.extend(usbtmc.list_resources())
+        except:
+            pass
+
+    return res
 
 
 class DriverOperation(IviContainer):
@@ -1733,85 +1821,86 @@ class Driver(DriverOperation, DriverIdentity, DriverUtility):
             # USB::1234::5678::SERIAL::INSTR
             # USB0::0x1234::0x5678::INSTR
             # USB0::0x1234::0x5678::SERIAL::INSTR
+            # USB0::0x1234::0x5678::SERIAL::0::INSTR
             # GPIB::10::INSTR
             # GPIB0::10::INSTR
             # ASRL1::INSTR
             # ASRL::COM1,9600,8n1::INSTR
             # ASRL::/dev/ttyUSB0,9600::INSTR
             # ASRL::/dev/ttyUSB0,9600,8n1::INSTR
-            m = re.match('^(?P<prefix>(?P<type>TCPIP|USB|GPIB|ASRL)\d*)(::(?P<arg1>[^\s:]+))?(::(?P<arg2>[^\s:]+(\[.+\])?))?(::(?P<arg3>[^\s:]+))?(::(?P<suffix>INSTR))$', resource, re.I)
+            m = re.match('^(?P<prefix>(?P<type>TCPIP|USB|GPIB|ASRL)\d*)(::(?P<arg1>[^\s:]+))?(::(?P<arg2>[^\s:]+(\[.+\])?))?(::(?P<arg3>[^\s:]+))?(::(?P<arg4>[^\s:]+))?(::(?P<suffix>INSTR))$', resource, re.I)
             if m is None:
                 if 'pyvisa' in globals():
                     # connect with PyVISA
                     self._interface = pyvisa.PyVisaInstrument(resource)
                 else:
                     raise IOException('Invalid resource string')
-
-            res_type = m.group('type').upper()
-            res_prefix = m.group('prefix')
-            res_arg1 = m.group('arg1')
-            res_arg2 = m.group('arg2')
-            res_arg3 = m.group('arg3')
-            res_suffix = m.group('suffix')
-
-            if res_type == 'TCPIP':
-                # TCP connection
-                if self._prefer_pyvisa and 'pyvisa' in globals():
-                    # connect with PyVISA
-                    self._interface = pyvisa.PyVisaInstrument(resource)
-                elif 'vxi11' in globals():
-                    # connect with VXI-11
-                    self._interface = vxi11.Instrument(resource)
-                elif 'pyvisa' in globals():
-                    # connect with PyVISA
-                    self._interface = pyvisa.PyVisaInstrument(resource)
-                else:
-                    raise IOException('Cannot use resource type %s' % res_type)
-            elif res_type == 'USB':
-                # USB connection
-                if self._prefer_pyvisa and 'pyvisa' in globals():
-                    # connect with PyVISA
-                    self._interface = pyvisa.PyVisaInstrument(resource)
-                elif 'usbtmc' in globals():
-                    # connect with USBTMC
-                    self._interface = usbtmc.Instrument(resource)
-                elif 'pyvisa' in globals():
-                    # connect with PyVISA
-                    self._interface = pyvisa.PyVisaInstrument(resource)
-                else:
-                    raise IOException('Cannot use resource type %s' % res_type)
-            elif res_type == 'GPIB':
-                # GPIB connection
-                if self._prefer_pyvisa and 'pyvisa' in globals():
-                    # connect with PyVISA
-                    self._interface = pyvisa.PyVisaInstrument(resource)
-                elif 'linuxgpib' in globals():
-                    # connect with linux-gpib
-                    self._interface = linuxgpib.LinuxGpibInstrument(resource)
-                elif 'pyvisa' in globals():
-                    # connect with PyVISA
-                    self._interface = pyvisa.PyVisaInstrument(resource)
-                else:
-                    raise IOException('Cannot use resource type %s' % res_type)
-            elif res_type == 'ASRL':
-                # Serial connection
-                if self._prefer_pyvisa and 'pyvisa' in globals():
-                    # connect with PyVISA
-                    self._interface = pyvisa.PyVisaInstrument(resource)
-                elif 'pyserial' in globals():
-                    # connect with PySerial
-                    self._interface = pyserial.SerialInstrument(resource)
-                elif 'pyvisa' in globals():
-                    # connect with PyVISA
-                    self._interface = pyvisa.PyVisaInstrument(resource)
-                else:
-                    raise IOException('Cannot use resource type %s' % res_type)
-                
-            elif 'pyvisa' in globals():
-                # connect with PyVISA
-                self._interface = pyvisa.PyVisaInstrument(resource)
             else:
-                raise IOException('Unknown resource type %s' % res_type)
+                res_type = m.group('type').upper()
+                res_prefix = m.group('prefix')
+                res_arg1 = m.group('arg1')
+                res_arg2 = m.group('arg2')
+                res_arg3 = m.group('arg3')
+                res_suffix = m.group('suffix')
+
+                if res_type == 'TCPIP':
+                    # TCP connection
+                    if self._prefer_pyvisa and 'pyvisa' in globals():
+                        # connect with PyVISA
+                        self._interface = pyvisa.PyVisaInstrument(resource)
+                    elif 'vxi11' in globals():
+                        # connect with VXI-11
+                        self._interface = vxi11.Instrument(resource)
+                    elif 'pyvisa' in globals():
+                        # connect with PyVISA
+                        self._interface = pyvisa.PyVisaInstrument(resource)
+                    else:
+                        raise IOException('Cannot use resource type %s' % res_type)
+                elif res_type == 'USB':
+                    # USB connection
+                    if self._prefer_pyvisa and 'pyvisa' in globals():
+                        # connect with PyVISA
+                        self._interface = pyvisa.PyVisaInstrument(resource)
+                    elif 'usbtmc' in globals():
+                        # connect with USBTMC
+                        self._interface = usbtmc.Instrument(resource)
+                    elif 'pyvisa' in globals():
+                        # connect with PyVISA
+                        self._interface = pyvisa.PyVisaInstrument(resource)
+                    else:
+                        raise IOException('Cannot use resource type %s' % res_type)
+                elif res_type == 'GPIB':
+                    # GPIB connection
+                    if self._prefer_pyvisa and 'pyvisa' in globals():
+                        # connect with PyVISA
+                        self._interface = pyvisa.PyVisaInstrument(resource)
+                    elif 'linuxgpib' in globals():
+                        # connect with linux-gpib
+                        self._interface = linuxgpib.LinuxGpibInstrument(resource)
+                    elif 'pyvisa' in globals():
+                        # connect with PyVISA
+                        self._interface = pyvisa.PyVisaInstrument(resource)
+                    else:
+                        raise IOException('Cannot use resource type %s' % res_type)
+                elif res_type == 'ASRL':
+                    # Serial connection
+                    if self._prefer_pyvisa and 'pyvisa' in globals():
+                        # connect with PyVISA
+                        self._interface = pyvisa.PyVisaInstrument(resource)
+                    elif 'pyserial' in globals():
+                        # connect with PySerial
+                        self._interface = pyserial.SerialInstrument(resource)
+                    elif 'pyvisa' in globals():
+                        # connect with PyVISA
+                        self._interface = pyvisa.PyVisaInstrument(resource)
+                    else:
+                        raise IOException('Cannot use resource type %s' % res_type)
+
+                elif 'pyvisa' in globals():
+                    # connect with PyVISA
+                    self._interface = pyvisa.PyVisaInstrument(resource)
+                else:
+                    raise IOException('Unknown resource type %s' % res_type)
 
             self._driver_operation_io_resource_descriptor = resource
 
@@ -1967,6 +2056,29 @@ class Driver(DriverOperation, DriverIdentity, DriverUtility):
             self._write(data, encoding)
             return self._read(num, encoding)
     
+    def _ask_for_values(self, msg, delim=',', converter=float, array=True):
+        '''
+        write then read a list or array of data
+        
+        Parameters
+        --------------
+        msg : str
+            message to write to instrument
+        delim : str
+            delimeter
+        converter : type
+            a datatype used to typecase the elements in the returned list
+        array: bool
+            convert the output to a numpy array 
+        
+        '''
+        s = self._ask(msg)
+        s_split = s.split(delim)
+        out = map(converter, s_split)
+        if array:
+            out = np.array(out)
+        return out
+    
     def _read_stb(self):
         "Read status byte"
         if self._driver_operation_simulate:
@@ -2023,9 +2135,29 @@ class Driver(DriverOperation, DriverIdentity, DriverUtility):
         # where l is length of n and n is the
         # length of the data
         # ex: #800002000 prefixes 2000 data bytes
-        
-        return decode_ieee_block(self._read_raw())
+
+        ch = self._read_raw(1)
+
+        if len(ch) == 0:
+            return b''
+
+        while ch != b'#':
+            ch = self._read_raw(1)
+
+        l = int(self._read_raw(1))
+        if l > 0:
+            num = int(self._read_raw(l))
+            raw_data = self._read_raw(num)
+        else:
+            raw_data = self._read_raw()
+
+        return raw_data
     
+    def _ask_for_ieee_block(self, data, encoding = 'utf-8'):
+        "Write string then read IEEE block"
+        self._write(data, encoding)
+        return self._read_ieee_block()
+
     def _write_ieee_block(self, data, prefix = None, encoding = 'utf-8'):
         "Write IEEE block"
         # IEEE block binary data is prefixed with #lnnnnnnnn

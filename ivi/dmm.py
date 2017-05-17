@@ -2,7 +2,7 @@
 
 Python Interchangeable Virtual Instrument Library
 
-Copyright (c) 2013-2014 Alex Forencich
+Copyright (c) 2013-2017 Alex Forencich
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -153,7 +153,7 @@ class Base(ivi.IviContainer):
         pass
     
     def _configure(self, function, range, resolution):
-        self._set_measurement_function(self, function)
+        self._set_measurement_function(function)
         if range in Auto:
             self._set_auto_range(range)
         else:

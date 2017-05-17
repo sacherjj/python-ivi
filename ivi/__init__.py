@@ -2,7 +2,9 @@
 
 Python Interchangeable Virtual Instrument Library
 
-Copyright (c) 2012-2014 Alex Forencich
+Copyright (c) 2012-2017 Alex Forencich
+
+Modified by Jeff Wurzbach 2014
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,14 +30,30 @@ __all__ = [
         # Base IVI class
         "ivi",
         # IVI abstract classes
-        "scope", "dmm", "fgen", "dcpwr", "swtch", "pwrmeter", "specan",
-        "rfsiggen", "counter",
+        "scope",
+        "dmm",
+        "fgen",
+        "dcpwr",
+        "swtch",
+        "pwrmeter",
+        "specan",
+        "rfsiggen",
+        "counter",
         # Extra IVI base classes
         "extra",
         # Generic IVI drivers
         "scpi",
         # IVI drivers
-        "agilent", "dicon", "chroma", "colby", "jdsu", "rigol", "tektronix"]
+        "agilent",
+        "dicon",
+        "chroma",
+        "colby",
+        "ics",
+        "jdsu",
+        "lecroy",
+        "rigol",
+        "tektronix",
+        "testequity"]
 
 from .ivi import *
 from . import *

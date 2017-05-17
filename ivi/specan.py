@@ -2,7 +2,7 @@
 
 Python Interchangeable Virtual Instrument Library
 
-Copyright (c) 2012-2014 Alex Forencich
+Copyright (c) 2012-2017 Alex Forencich
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -524,7 +524,8 @@ class Base(ivi.IviContainer):
         return self._acquisition_vertical_scale
     
     def _set_acquisition_vertical_scale(self, value):
-        value = float(value)
+        if value not in VerticalScale:
+            raise ivi.ValueNotSupportedException()
         self._acquisition_vertical_scale = value
     
     def _get_sweep_coupling_video_bandwidth(self):

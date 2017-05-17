@@ -2,7 +2,7 @@
 
 Python Interchangeable Virtual Instrument Library
 
-Copyright (c) 2012-2014 Alex Forencich
+Copyright (c) 2012-2017 Alex Forencich
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -71,6 +71,8 @@ class agilent2000A(agilentBaseInfiniiVision, fgen.Base, fgen.StdFunc, fgen.Modul
         self._display_screenshot_image_format_mapping = ScreenshotImageFormatMapping
 
         # wavegen option
+        self._output_mode_list = OutputMode
+        self._operation_mode_list = OperationMode
         self._output_count = 1
         self._output_standard_waveform_mapping = StandardWaveformMapping
         
@@ -80,6 +82,7 @@ class agilent2000A(agilentBaseInfiniiVision, fgen.Base, fgen.StdFunc, fgen.Modul
                 'MSOX2022A','MSOX2024A']
 
         self._init_outputs()
+        self._init_channels()
         
     def _init_outputs(self):
         try:
@@ -112,7 +115,7 @@ class agilent2000A(agilentBaseInfiniiVision, fgen.Base, fgen.StdFunc, fgen.Modul
     
     def _set_output_operation_mode(self, index, value):
         index = ivi.get_index(self._output_name, index)
-        if value not in OperationMode:
+        if value not in self._operation_mode_list:
             raise ivi.ValueNotSupportedException()
         self._output_operation_mode[index] = value
     
@@ -163,7 +166,7 @@ class agilent2000A(agilentBaseInfiniiVision, fgen.Base, fgen.StdFunc, fgen.Modul
     
     def _set_output_mode(self, index, value):
         index = ivi.get_index(self._output_name, index)
-        if value not in OutputMode:
+        if value not in self._output_mode_list:
             raise ivi.ValueNotSupportedException()
         self._output_mode[index] = value
     

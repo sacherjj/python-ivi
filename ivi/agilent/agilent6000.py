@@ -2,7 +2,7 @@
 
 Python Interchangeable Virtual Instrument Library
 
-Copyright (c) 2012-2014 Alex Forencich
+Copyright (c) 2012-2017 Alex Forencich
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,9 +24,9 @@ THE SOFTWARE.
 
 """
 
-from .agilentBaseScope import *
+from .agilentBaseInfiniiVision import *
 
-class agilent6000(agilentBaseScope):
+class agilent6000(agilentBaseInfiniiVision):
     "Agilent InfiniiVision 6000 series IVI oscilloscope driver"
     
     def __init__(self, *args, **kwargs):
@@ -45,6 +45,7 @@ class agilent6000(agilentBaseScope):
         self._identity_supported_instrument_models = ['DSO6012A','DSO6014A','DSO6032A',
                 'DSO6034A','DSO6052A','DSO6054A','DSO6102A','DSO6104A','MSO6012A','MSO6014A',
                 'MSO6032A','MSO6034A','MSO6052A','MSO6054A','MSO6102A','MSO6104A']
-        
+
+        self._init_channels()
     
     

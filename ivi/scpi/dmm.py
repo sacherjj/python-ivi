@@ -2,7 +2,7 @@
 
 Python Interchangeable Virtual Instrument Library
 
-Copyright (c) 2012-2014 Alex Forencich
+Copyright (c) 2012-2017 Alex Forencich
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -337,7 +337,7 @@ class MultiPoint(dmm.MultiPoint):
             if float(value) >= 9.9e37:
                 value = float('inf')
             else:
-                value = int(value)
+                value = int(float(value))
             self._trigger_multi_point_count = value
             self._set_cache_valid()
         return self._trigger_multi_point_count
@@ -356,16 +356,20 @@ class MultiPoint(dmm.MultiPoint):
         self._set_cache_valid()
     
     def _measurement_fetch_multi_point(self, max_time, num_of_measurements = 0):
-        pass
+        if not self._driver_operation_simulate:
+            return self._ask_for_values(":fetch?", array=False)
+        return [0.0 for i in range(self._trigger_multi_point_count*self._trigger_multi_point_sample_count)]
     
     def _measurement_read_multi_point(self, max_time, num_of_measurements = 0):
-        pass
+        if not self._driver_operation_simulate:
+            return self._ask_for_values(":read?", array=False)
+        return [0.0 for i in range(self._trigger_multi_point_count*self._trigger_multi_point_sample_count)]
     
     
 class SoftwareTrigger(dmm.SoftwareTrigger):
     "Extension IVI methods for DMMs that can initiate a measurement based on a software trigger signal"
     
-    def send_software_trigger(self):
+    def _send_software_trigger(self):
         if not self._driver_operation_simulate:
             self._write("*trg")
 

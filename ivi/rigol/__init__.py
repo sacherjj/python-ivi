@@ -2,7 +2,7 @@
 
 Python Interchangeable Virtual Instrument Library
 
-Copyright (c) 2013-2014 Alex Forencich
+Copyright (c) 2013-2017 Alex Forencich
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,3 +32,7 @@ from .rigolDP832A import rigolDP832A
 # DP1000
 from .rigolDP1116A import rigolDP1116A
 from .rigolDP1308A import rigolDP1308A
+
+# Digital Multimeters
+#DM3068
+from .rigolDM3068Agilent import rigolDM3068Agilent
